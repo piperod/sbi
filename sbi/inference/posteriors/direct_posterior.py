@@ -50,6 +50,7 @@ class DirectPosterior(NeuralPosterior):
         mcmc_method: str = "slice_np",
         mcmc_parameters: Optional[Dict[str, Any]] = None,
         rejection_sampling_parameters: Optional[Dict[str, Any]] = None,
+        device: str = "cpu",
     ):
         """
         Args:
@@ -77,6 +78,7 @@ class DirectPosterior(NeuralPosterior):
                 `max_sampling_batch_size` to set the batch size for drawing new
                 samples from the candidate distribution, e.g., the posterior. Larger
                 batch size speeds up sampling.
+            device: Training device, e.g., cpu or cuda:0
         """
 
         kwargs = del_entries(
@@ -194,14 +196,16 @@ class DirectPosterior(NeuralPosterior):
         theta, x = self._prepare_theta_and_x_for_log_prob_(theta, x)
 
         with torch.set_grad_enabled(track_gradients):
-            unnorm_log_prob = self.net.log_prob(theta, x)
+            unnorm_log_prob = self.net.log_prob(
+                theta.to(self._device), x.to(self._device)
+            )
 
             # Force probability to be zero outside prior support.
             is_prior_finite = torch.isfinite(self._prior.log_prob(theta))
 
             masked_log_prob = torch.where(
                 is_prior_finite,
-                unnorm_log_prob,
+                unnorm_log_prob.to("cpu"),
                 torch.tensor(float("-inf"), dtype=torch.float32),
             )
 
@@ -249,7 +253,7 @@ class DirectPosterior(NeuralPosterior):
             return utils.sample_posterior_within_prior(
                 self.net,
                 self._prior,
-                x,
+                x.to(self._device),
                 num_rejection_samples,
                 show_progress_bars,
                 sample_for_correction_factor=True,
@@ -279,6 +283,7 @@ class DirectPosterior(NeuralPosterior):
         mcmc_method: Optional[str] = None,
         mcmc_parameters: Optional[Dict[str, Any]] = None,
         rejection_sampling_parameters: Optional[Dict[str, Any]] = None,
+        return_device: str = "cpu",
     ) -> Tensor:
         r"""
         Return samples from posterior distribution $p(\theta|x)$.
@@ -311,6 +316,9 @@ class DirectPosterior(NeuralPosterior):
                 `max_sampling_batch_size` to set the batch size for drawing new
                 samples from the candidate distribution, e.g., the posterior. Larger
                 batch size speeds up sampling.
+            return_device: device of the returned samples. Default to CPU because
+                usually only the evaluation and sampling happens on the GPU.
+
         Returns:
             Samples from posterior.
         """
@@ -318,10 +326,15 @@ class DirectPosterior(NeuralPosterior):
         x, num_samples, mcmc_method, mcmc_parameters = self._prepare_for_sample(
             x, sample_shape, mcmc_method, mcmc_parameters
         )
+        # Move x to the same device as the nn.
+        x = x.to(self._device)
 
         sample_with_mcmc = (
             sample_with_mcmc if sample_with_mcmc is not None else self.sample_with_mcmc
         )
+
+        # Move x to current device.
+        x = x.to(self._device)
 
         self.net.eval()
 
@@ -474,7 +487,7 @@ class PotentialFunctionProvider:
 
         with torch.set_grad_enabled(False):
             target_log_prob = self.posterior_nn.log_prob(
-                inputs=theta, context=x_repeated,
+                inputs=theta.to(self.x.device), context=x_repeated,
             )
             is_within_prior = torch.isfinite(self.prior.log_prob(theta))
             target_log_prob[~is_within_prior] = -float("Inf")
@@ -494,7 +507,10 @@ class PotentialFunctionProvider:
         theta = next(iter(theta.values()))
 
         # Notice opposite sign to numpy.
-        log_prob_posterior = -self.posterior_nn.log_prob(inputs=theta, context=self.x)
+        # Move theta to device for evaluation, move back to cpu for comparison to prior.
+        log_prob_posterior = -self.posterior_nn.log_prob(
+            inputs=theta.to(self.x.device), context=self.x
+        ).cpu()
         log_prob_prior = self.prior.log_prob(theta)
 
         within_prior = torch.isfinite(log_prob_prior)

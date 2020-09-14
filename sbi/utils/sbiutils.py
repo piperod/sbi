@@ -81,7 +81,7 @@ class Standardize(nn.Module):
         self.register_buffer("_std", std)
 
     def forward(self, tensor):
-        return (tensor - self.mean) / self.std
+        return (tensor - self._mean) / self._std
 
 
 def standardizing_net(batch_t: Tensor, min_std: float = 1e-7) -> nn.Module:

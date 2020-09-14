@@ -4,6 +4,7 @@
 
 from abc import ABC
 from copy import deepcopy
+import pdb
 from typing import Any, Callable, Dict, Optional, Union
 
 import torch
@@ -157,6 +158,7 @@ class LikelihoodEstimator(NeuralInference, ABC):
                 x_shape=x_shape,
                 mcmc_method=self._mcmc_method,
                 mcmc_parameters=self._mcmc_parameters,
+                device=self._device,
             )
 
         # Copy MCMC init parameters for latest sample init
@@ -245,6 +247,7 @@ class LikelihoodEstimator(NeuralInference, ABC):
             sampler=SubsetRandomSampler(val_indices),
         )
 
+        self._posterior.net.to(self._device)
         optimizer = optim.Adam(
             list(self._posterior.net.parameters()), lr=learning_rate,
         )

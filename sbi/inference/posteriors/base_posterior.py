@@ -56,6 +56,7 @@ class NeuralPosterior(ABC):
         x_shape: torch.Size,
         mcmc_method: str = "slice_np",
         mcmc_parameters: Optional[Dict[str, Any]] = None,
+        device: str = "cpu",
     ):
         """
         Args:
@@ -75,6 +76,7 @@ class NeuralPosterior(ABC):
                 will draw init locations from prior, whereas `sir` will use Sequential-
                 Importance-Resampling. Init strategies may have their own keywords
                 which can also be set from `mcmc_parameters`.
+            device: Training device, e.g., cpu or cuda:0.
         """
         if method_family in ("snpe", "snle", "snre_a", "snre_b"):
             self._method_family = method_family
@@ -92,6 +94,7 @@ class NeuralPosterior(ABC):
         self._prior = prior
         self._x = None
         self._x_shape = x_shape
+        self._device = device
 
     @property
     def default_x(self) -> Optional[Tensor]:

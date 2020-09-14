@@ -166,6 +166,7 @@ class RatioEstimator(NeuralInference, ABC):
                 x_shape=x_shape,
                 mcmc_method=self._mcmc_method,
                 mcmc_parameters=self._mcmc_parameters,
+                device=self._device,
             )
 
         # Copy MCMC init parameters for latest sample init
@@ -264,6 +265,7 @@ class RatioEstimator(NeuralInference, ABC):
             sampler=SubsetRandomSampler(val_indices),
         )
 
+        self._posterior.net.to(self._device)
         optimizer = optim.Adam(
             list(self._posterior.net.parameters()), lr=learning_rate,
         )
