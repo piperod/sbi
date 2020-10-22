@@ -278,6 +278,10 @@ class NeuralPosterior(ABC):
         mcmc_parameters = (
             mcmc_parameters if mcmc_parameters is not None else self.mcmc_parameters
         )
+
+        # Move x to current device.
+        x = x.to(self._device)
+
         return x, num_samples, mcmc_method, mcmc_parameters
 
     def _sample_posterior_mcmc(

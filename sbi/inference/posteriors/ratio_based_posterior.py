@@ -163,9 +163,6 @@ class RatioBasedPosterior(NeuralPosterior):
             x, sample_shape, mcmc_method, mcmc_parameters
         )
 
-        # Move x to current device.
-        x = x.to(self._device)
-
         self.net.eval()
 
         potential_fn_provider = PotentialFunctionProvider()

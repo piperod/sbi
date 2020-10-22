@@ -105,9 +105,10 @@ class LikelihoodBasedPosterior(NeuralPosterior):
         )
 
         with torch.set_grad_enabled(track_gradients):
-            return self.net.log_prob(x.to(self._device), theta.to(self._device)).to(
-                "cpu"
-            ) + self._prior.log_prob(theta)
+            # Evaluate on device, move to cpu for comparison with prior.
+            return self.net.log_prob(
+                x.to(self._device), theta.to(self._device)
+            ).cpu() + self._prior.log_prob(theta)
 
     def sample(
         self,
@@ -147,9 +148,6 @@ class LikelihoodBasedPosterior(NeuralPosterior):
         x, num_samples, mcmc_method, mcmc_parameters = self._prepare_for_sample(
             x, sample_shape, mcmc_method, mcmc_parameters
         )
-
-        # Move x to current device.
-        x = x.to(self._device)
 
         self.net.eval()
 
@@ -290,6 +288,7 @@ class PotentialFunctionProvider:
         x = ensure_x_batched(self.x).repeat(num_batch, 1)
 
         with torch.set_grad_enabled(False):
+            # Evaluate on device, move back to cpu for comparison with prior.
             log_likelihood = self.likelihood_nn.log_prob(
                 inputs=x, context=theta.to(self.x.device)
             ).cpu()
@@ -311,7 +310,7 @@ class PotentialFunctionProvider:
 
         theta = next(iter(theta.values()))
 
-        # Move theta to device for evaluation, move back to cpu for comparison to prior.
+        # Evaluate on device, move back to cpu for comparison with prior.
         log_likelihood = self.likelihood_nn.log_prob(
             inputs=self.x.reshape(1, -1), context=theta.reshape(1, -1).to(self.x.device)
         ).cpu()

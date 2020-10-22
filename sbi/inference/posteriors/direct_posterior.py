@@ -196,16 +196,18 @@ class DirectPosterior(NeuralPosterior):
         theta, x = self._prepare_theta_and_x_for_log_prob_(theta, x)
 
         with torch.set_grad_enabled(track_gradients):
+
+            # Evaluate on device, move back to cpu for comparison with prior.
             unnorm_log_prob = self.net.log_prob(
                 theta.to(self._device), x.to(self._device)
-            )
+            ).cpu()
 
             # Force probability to be zero outside prior support.
             is_prior_finite = torch.isfinite(self._prior.log_prob(theta))
 
             masked_log_prob = torch.where(
                 is_prior_finite,
-                unnorm_log_prob.to("cpu"),
+                unnorm_log_prob,
                 torch.tensor(float("-inf"), dtype=torch.float32),
             )
 
@@ -326,15 +328,10 @@ class DirectPosterior(NeuralPosterior):
         x, num_samples, mcmc_method, mcmc_parameters = self._prepare_for_sample(
             x, sample_shape, mcmc_method, mcmc_parameters
         )
-        # Move x to the same device as the nn.
-        x = x.to(self._device)
 
         sample_with_mcmc = (
             sample_with_mcmc if sample_with_mcmc is not None else self.sample_with_mcmc
         )
-
-        # Move x to current device.
-        x = x.to(self._device)
 
         self.net.eval()
 
@@ -507,10 +504,10 @@ class PotentialFunctionProvider:
         theta = next(iter(theta.values()))
 
         # Notice opposite sign to numpy.
-        # Move theta to device for evaluation, move back to cpu for comparison to prior.
+        # Move theta to device for evaluation.
         log_prob_posterior = -self.posterior_nn.log_prob(
             inputs=theta.to(self.x.device), context=self.x
-        ).cpu()
+        )
         log_prob_prior = self.prior.log_prob(theta)
 
         within_prior = torch.isfinite(log_prob_prior)
