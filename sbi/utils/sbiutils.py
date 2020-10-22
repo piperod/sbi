@@ -173,8 +173,10 @@ def sample_posterior_within_prior(
     while num_remaining > 0:
 
         # Sample and reject.
-        candidates = posterior_nn.sample(sampling_batch_size, context=x).reshape(
-            sampling_batch_size, -1
+        candidates = (
+            posterior_nn.sample(sampling_batch_size, context=x)
+            .reshape(sampling_batch_size, -1)
+            .cpu()  # Move to cpu to evaluate under prior.
         )
         are_within_prior = torch.isfinite(prior.log_prob(candidates))
         samples = candidates[are_within_prior]

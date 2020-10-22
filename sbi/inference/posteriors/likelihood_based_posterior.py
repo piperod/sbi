@@ -290,7 +290,7 @@ class PotentialFunctionProvider:
         with torch.set_grad_enabled(False):
             # Evaluate on device, move back to cpu for comparison with prior.
             log_likelihood = self.likelihood_nn.log_prob(
-                inputs=x, context=theta.to(self.x.device)
+                inputs=x, context=theta.to(x.device)
             ).cpu()
 
         # Notice opposite sign to pyro potential.

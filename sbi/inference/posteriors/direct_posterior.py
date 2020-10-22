@@ -285,7 +285,6 @@ class DirectPosterior(NeuralPosterior):
         mcmc_method: Optional[str] = None,
         mcmc_parameters: Optional[Dict[str, Any]] = None,
         rejection_sampling_parameters: Optional[Dict[str, Any]] = None,
-        return_device: str = "cpu",
     ) -> Tensor:
         r"""
         Return samples from posterior distribution $p(\theta|x)$.
@@ -318,9 +317,6 @@ class DirectPosterior(NeuralPosterior):
                 `max_sampling_batch_size` to set the batch size for drawing new
                 samples from the candidate distribution, e.g., the posterior. Larger
                 batch size speeds up sampling.
-            return_device: device of the returned samples. Default to CPU because
-                usually only the evaluation and sampling happens on the GPU.
-
         Returns:
             Samples from posterior.
         """
@@ -507,7 +503,7 @@ class PotentialFunctionProvider:
         # Move theta to device for evaluation.
         log_prob_posterior = -self.posterior_nn.log_prob(
             inputs=theta.to(self.x.device), context=self.x
-        )
+        ).cpu()
         log_prob_prior = self.prior.log_prob(theta)
 
         within_prior = torch.isfinite(log_prob_prior)
