@@ -29,7 +29,7 @@ REQUIRED = [
     "numpy",
     "pillow",
     "pyro-ppl>=1.3.1",
-    "pyknos@git+https://github.com/mackelab/pyknos@gpu-support",
+    "pyknos==0.13",
     "scipy",
     "tensorboard",
     "torch>=1.5.1",
