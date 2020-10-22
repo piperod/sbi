@@ -35,14 +35,13 @@ def process_device(device: str) -> str:
         try:
             torch.zeros(1).to(device)
             warnings.warn(
-                """GPU was selected as a device for training the neural network. Note 
-                that we expect **no** significant speed ups in training for the default
-            architectures we provide. Using the GPU will be effective only for large
-            neural networks with operations that are fast on the GPU, e.g.,
-            for CNN or RNN embeddings."""
+                """GPU was selected as a device for training the neural network. Note
+                   that we expect **no** significant speed ups in training for the
+                   default architectures we provide. Using the GPU will be effective
+                   only for large neural networks with operations that are fast on the
+                   GPU, e.g., for a CNN or RNN `embedding_net`."""
             )
-
-        except:
+        except (RuntimeError, AssertionError):
             warnings.warn(f"Device {device} not available, falling back to CPU.")
             device = "cpu"
 
