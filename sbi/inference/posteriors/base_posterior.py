@@ -76,7 +76,7 @@ class NeuralPosterior(ABC):
                 will draw init locations from prior, whereas `sir` will use Sequential-
                 Importance-Resampling. Init strategies may have their own keywords
                 which can also be set from `mcmc_parameters`.
-            device: Training device, e.g., cpu or cuda:0.
+            device: Training device, e.g., cpu or cuda.
         """
         if method_family in ("snpe", "snle", "snre_a", "snre_b"):
             self._method_family = method_family
