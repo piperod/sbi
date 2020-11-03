@@ -7,7 +7,7 @@ Yes. When creating the inference object in the flexible interface, you can pass 
 `device` as an argument, e.g.,
 
 ```python
-inference = SNPE(simulator, prior, device="cuda:0", density_estimator="maf")
+inference = SNPE(simulator, prior, device="cuda", density_estimator="maf")
 ```
 
 The device is set to `"cpu"` by default, and it can be set to anything, as long as it
