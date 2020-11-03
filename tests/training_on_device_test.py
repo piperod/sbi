@@ -36,6 +36,7 @@ def test_gpu_training(method, model, device):
     This test does not check training speeds.
 
     """
+    device = process_device(device)
 
     num_dim = 2
     num_samples = 10
