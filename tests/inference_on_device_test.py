@@ -30,7 +30,7 @@ devices = ["cpu", "cuda:0"]
     ],
 )
 @pytest.mark.parametrize("device", ("cpu", "cuda:0"))
-def test_gpu_training(method, model, device):
+def test_training_and_mcmc_on_device(method, model, device):
     """Test training on devices.
 
     This test does not check training speeds.
@@ -62,7 +62,8 @@ def test_gpu_training(method, model, device):
         )
     elif method == SNLE:
         kwargs = dict(
-            density_estimator=utils.likelihood_nn(model=model), mcmc_method="slice",
+            density_estimator=utils.likelihood_nn(model=model),
+            mcmc_method="slice_np_vectorized",
         )
     elif method == SNRE:
         kwargs = dict(classifier=utils.classifier_nn(model=model), mcmc_method="nuts",)
