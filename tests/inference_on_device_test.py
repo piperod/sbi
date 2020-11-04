@@ -72,13 +72,21 @@ def test_training_and_mcmc_on_device(method, model, device):
 
     infer = method(simulator, prior, show_progress_bars=False, device=device, **kwargs)
 
-    posterior = infer(
+    # Test for two rounds.
+    posterior1 = infer(
         num_simulations=num_simulations,
         training_batch_size=100,
         max_num_epochs=max_num_epochs,
     ).set_default_x(x_o)
 
-    posterior.sample((num_samples,), show_progress_bars=False)
+    posterior2 = infer(
+        num_simulations=num_simulations,
+        training_batch_size=100,
+        max_num_epochs=max_num_epochs,
+        proposal=posterior1,
+    ).set_default_x(x_o)
+
+    posterior2.sample((num_samples,), show_progress_bars=False)
 
 
 @pytest.mark.parametrize("device", ["cpu", "gpu", "cuda", "cuda:0", "cuda:42"])
